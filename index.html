@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frete Inteligente - Dashboard da Plataforma</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #0f172a;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .title {
+      font-size: 34px;
+      font-weight: 800;
+      margin: 0;
+    }
+    .sub {
+      color: #64748b;
+      margin-top: 6px;
+    }
+    .btn-exit {
+      border: none;
+      background: #0f766e;
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    .stat, .card {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(15,23,42,.08);
+      border: 1px solid #e2e8f0;
+    }
+    .stat {
+      padding: 24px;
+    }
+    .stat .k {
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 700;
+    }
+    .stat .v {
+      font-size: 34px;
+      font-weight: 800;
+      margin-top: 10px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 18px;
+    }
+    .card {
+      padding: 24px;
+    }
+    .card h3 {
+      margin: 0 0 18px;
+      font-size: 22px;
+    }
+    input, select {
+      width: 100%;
+      padding: 13px 14px;
+      margin-bottom: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      font-size: 14px;
+      background: #fff;
+    }
+    button.primary {
+      width: 100%;
+      border: none;
+      background: #0f766e;
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 14px;
+    }
+    th {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .warning {
+      background: #fef9c3;
+      color: #854d0e;
+    }
+    .msg {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #166534;
+      min-height: 18px;
+    }
+    .abas {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .aba {
+      padding: 10px 20px;
+      background: #f1f5f9;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .aba.ativa {
+      background: #0f766e;
+      color: white;
+    }
+    @media (max-width: 1100px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+      .grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div>
+        <h1 class="title">📊 Dashboard da Plataforma</h1>
+        <div class="sub">Gestão central do Frete Inteligente</div>
+      </div>
+      <button class="btn-exit" onclick="logout()">Sair</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="k">Empresas</div>
+        <div class="v" id="stat_empresas">0</div>
+      </div>
+      <div class="stat">
+        <div class="k">Usuários</div>
+        <div class="v" id="stat_usuarios">0</div>
+      </div>
+      <div class="stat">
+        <div class="k">Rotas simuladas</div>
+        <div class="v" id="stat_rotas">0</div>
+      </div>
+      <div class="stat">
+        <div class="k">Economia gerada</div>
+        <div class="v" id="stat_saving">R$ 0</div>
+      </div>
+    </div>
+
+    <div class="abas">
+      <div class="aba ativa" onclick="mostrarAba('empresas')">🏢 Empresas</div>
+      <div class="aba" onclick="mostrarAba('pendentes')">⏳ Pendentes</div>
+      <div class="aba" onclick="mostrarAba('usuarios')">👥 Usuários</div>
+    </div>
+
+    <!-- ABA EMPRESAS -->
+    <div id="abaEmpresas">
+      <div class="grid">
+        <div class="card">
+          <h3>➕ Cadastrar nova empresa</h3>
+
+          <input id="empresa_nome" placeholder="Nome da Empresa" />
+          <input id="empresa_cnpj" placeholder="CNPJ (apenas números)" maxlength="14" oninput="mascaraCNPJ(this)" />
+          <input id="empresa_responsavel" placeholder="Nome do Responsável" />
+          <input id="empresa_email" type="email" placeholder="Email do Responsável" />
+
+          <select id="empresa_plano">
+            <option value="starter">Starter</option>
+            <option value="pro">Pro</option>
+            <option value="enterprise">Enterprise</option>
+          </select>
+
+          <button class="primary" onclick="criarEmpresa()">📌 Cadastrar empresa</button>
+          <div id="msg_empresa" class="msg"></div>
+        </div>
+
+        <div class="card">
+          <h3>🏢 Empresas cadastradas</h3>
+          <div style="max-height: 400px; overflow-y: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Empresa</th>
+                  <th>CNPJ</th>
+                  <th>Plano</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="lista_empresas"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA PENDENTES -->
+    <div id="abaPendentes" style="display: none;">
+      <div class="card">
+        <h3>⏳ Usuários aguardando aprovação</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Empresa</th>
+              <th>Perfil</th>
+              <th>Data</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="lista_pendentes"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ABA USUÁRIOS -->
+    <div id="abaUsuarios" style="display: none;">
+      <div class="card">
+        <h3>👥 Todos os usuários</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Empresa</th>
+              <th>Perfil</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="lista_usuarios"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_AUTH_DOMAIN",
+      databaseURL: "https://rota-22c3b-default-rtdb.firebaseio.com/",
+      projectId: "SEU_PROJECT_ID"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const db = firebase.database();
+
+    // Verificar acesso
+    (function validarAcesso() {
+      const perfil = localStorage.getItem("perfil");
+      const usuarioId = localStorage.getItem("usuario_id");
+      
+      if (!usuarioId || perfil !== "admin_plataforma") {
+        window.location.href = "index.html";
+      }
+    })();
+
+    function mostrarAba(aba) {
+      document.querySelectorAll('.aba').forEach(el => el.classList.remove('ativa'));
+      document.getElementById('abaEmpresas').style.display = 'none';
+      document.getElementById('abaPendentes').style.display = 'none';
+      document.getElementById('abaUsuarios').style.display = 'none';
+      
+      if (aba === 'empresas') {
+        document.getElementById('abaEmpresas').style.display = 'block';
+        document.querySelectorAll('.aba')[0].classList.add('ativa');
+        carregarEmpresas();
+      } else if (aba === 'pendentes') {
+        document.getElementById('abaPendentes').style.display = 'block';
+        document.querySelectorAll('.aba')[1].classList.add('ativa');
+        carregarPendentes();
+      } else {
+        document.getElementById('abaUsuarios').style.display = 'block';
+        document.querySelectorAll('.aba')[2].classList.add('ativa');
+        carregarTodosUsuarios();
+      }
+    }
+
+    function mascaraCNPJ(input) {
+      let v = input.value.replace(/\D/g, '');
+      if (v.length <= 14) {
+        if (v.length > 2) v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+        if (v.length > 5) v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+        if (v.length > 8) v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+        if (v.length > 12) v = v.replace(/(\d{4})(\d)/, '$1-$2');
+        input.value = v;
+      }
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+
+    async function criarEmpresa() {
+      const nome = document.getElementById("empresa_nome").value.trim();
+      const cnpjInput = document.getElementById("empresa_cnpj").value;
+      const cnpj = cnpjInput.replace(/\D/g, '');
+      const responsavel = document.getElementById("empresa_responsavel").value.trim();
+      const email = document.getElementById("empresa_email").value.trim();
+      const plano = document.getElementById("empresa_plano").value;
+      const msg = document.getElementById("msg_empresa");
+
+      msg.textContent = "";
+
+      if (!nome || !cnpj || cnpj.length !== 14 || !responsavel || !email) {
+        msg.style.color = "#dc2626";
+        msg.textContent = "Preencha todos os campos corretamente (CNPJ com 14 números).";
+        return;
+      }
+
+      try {
+        // Verificar se CNPJ já existe
+        const snap = await db.ref("empresas").orderByChild("cnpj").equalTo(cnpj).once("value");
+        if (snap.exists()) {
+          msg.style.color = "#dc2626";
+          msg.textContent = "CNPJ já cadastrado.";
+          return;
+        }
+
+        const ref = db.ref("empresas").push();
+        await ref.set({
+          nome_fantasia: nome,
+          cnpj: cnpj,
+          cnpj_formatado: cnpjInput,
+          responsavel: responsavel,
+          email: email,
+          plano: plano,
+          status: "ativo",
+          data_cadastro: Date.now()
+        });
+
+        msg.style.color = "#166534";
+        msg.textContent = "✅ Empresa cadastrada com sucesso.";
+
+        // Limpar formulário
+        document.getElementById("empresa_nome").value = "";
+        document.getElementById("empresa_cnpj").value = "";
+        document.getElementById("empresa_responsavel").value = "";
+        document.getElementById("empresa_email").value = "";
+        document.getElementById("empresa_plano").value = "starter";
+
+        carregarEmpresas();
+        carregarDashboard();
+      } catch (error) {
+        msg.style.color = "#dc2626";
+        msg.textContent = "Erro ao cadastrar empresa.";
+        console.error(error);
+      }
+    }
+
+    async function carregarEmpresas() {
+      const lista = document.getElementById("lista_empresas");
+      lista.innerHTML = '<tr><td colspan="5" style="text-align: center;">Carregando...</td></tr>';
+
+      const snap = await db.ref("empresas").once("value");
+      let html = "";
+
+      snap.forEach((c) => {
+        const e = c.val();
+        const statusClass = e.status === 'ativo' ? 'ok' : 'warning';
+        html += `
+          <tr>
+            <td><strong>${e.nome_fantasia || '---'}</strong></td>
+            <td>${e.cnpj_formatado || e.cnpj || '---'}</td>
+            <td>${e.plano || 'starter'}</td>
+            <td><span class="pill ${statusClass}">${e.status || 'ativo'}</span></td>
+            <td>
+              <button onclick="verEmpresa('${c.key}')" style="padding: 4px 8px; background: #0f766e; color: white; border: none; border-radius: 4px; cursor: pointer;">👁️</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      if (html === "") {
+        html = '<tr><td colspan="5" style="text-align: center;">Nenhuma empresa cadastrada</td></tr>';
+      }
+
+      lista.innerHTML = html;
+    }
+
+    async function carregarPendentes() {
+      const lista = document.getElementById("lista_pendentes");
+      lista.innerHTML = '<tr><td colspan="6" style="text-align: center;">Carregando...</td></tr>';
+
+      const snap = await db.ref("usuarios").orderByChild("status").equalTo("pendente").once("value");
+      let html = "";
+
+      snap.forEach((c) => {
+        const u = c.val();
+        const data = new Date(u.data_cadastro).toLocaleDateString('pt-BR');
+        html += `
+          <tr>
+            <td><strong>${u.nome || ''}</strong></td>
+            <td>${u.email || ''}</td>
+            <td>${u.cnpj_formatado || u.cnpj || ''}</td>
+            <td>${u.perfil || ''}</td>
+            <td>${data}</td>
+            <td>
+              <button onclick="aprovarUsuario('${c.key}')" style="padding: 4px 8px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer;">✅</button>
+              <button onclick="rejeitarUsuario('${c.key}')" style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">❌</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      if (html === "") {
+        html = '<tr><td colspan="6" style="text-align: center;">Nenhum usuário pendente</td></tr>';
+      }
+
+      lista.innerHTML = html;
+    }
+
+    async function carregarTodosUsuarios() {
+      const lista = document.getElementById("lista_usuarios");
+      lista.innerHTML = '<tr><td colspan="5" style="text-align: center;">Carregando...</td></tr>';
+
+      const snap = await db.ref("usuarios").once("value");
+      let html = "";
+
+      snap.forEach((c) => {
+        const u = c.val();
+        const statusClass = u.status === 'ativo' ? 'ok' : 'warning';
+        html += `
+          <tr>
+            <td>${u.nome || ''}</td>
+            <td>${u.email || ''}</td>
+            <td>${u.cnpj_formatado || u.cnpj || ''}</td>
+            <td>${u.perfil || ''}</td>
+            <td><span class="pill ${statusClass}">${u.status || 'pendente'}</span></td>
+          </tr>
+        `;
+      });
+
+      if (html === "") {
+        html = '<tr><td colspan="5" style="text-align: center;">Nenhum usuário cadastrado</td></tr>';
+      }
+
+      lista.innerHTML = html;
+    }
+
+    window.aprovarUsuario = async function(userId) {
+      if (!confirm("Aprovar este usuário?")) return;
+      await db.ref(`usuarios/${userId}`).update({ status: "ativo" });
+      carregarPendentes();
+      carregarDashboard();
+    };
+
+    window.rejeitarUsuario = async function(userId) {
+      if (!confirm("Remover este usuário?")) return;
+      await db.ref(`usuarios/${userId}`).remove();
+      carregarPendentes();
+      carregarDashboard();
+    };
+
+    window.verEmpresa = function(empresaId) {
+      alert(`Detalhes da empresa: ${empresaId}`);
+      // Aqui você pode redirecionar para uma página de detalhes
+    };
+
+    async function carregarDashboard() {
+      const empresasSnap = await db.ref("empresas").once("value");
+      const usuariosSnap = await db.ref("usuarios").once("value");
+      const rotasSnap = await db.ref("rotas").once("value");
+
+      document.getElementById("stat_empresas").innerText = empresasSnap.numChildren() || 0;
+      document.getElementById("stat_usuarios").innerText = usuariosSnap.numChildren() || 0;
+      document.getElementById("stat_rotas").innerText = rotasSnap.numChildren() || 0;
+
+      // Calcular saving (exemplo)
+      const saving = (rotasSnap.numChildren() * 150).toFixed(2);
+      document.getElementById("stat_saving").innerText = `R$ ${saving}`;
+    }
+
+    // Carregar dados iniciais
+    carregarDashboard();
+    carregarEmpresas();
+  </script>
+</body>
+</html>
